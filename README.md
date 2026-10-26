@@ -1,68 +1,79 @@
-# Détection des émotions à partir de texte — GoEmotions
+# GoEmotions — classification des émotions dans les textes
 
-Mini-projet de classification de commentaires en anglais avec TF‑IDF et modèles de Machine Learning classiques. Le dépôt réunit les données, le notebook reproductible et la présentation.
+Mini-projet de traitement automatique du langage naturel (NLP) consacré à la classification de commentaires Reddit en anglais. Le projet compare plusieurs modèles classiques de machine learning à partir de représentations TF‑IDF et étudie trois niveaux de classification : 28 labels, trois sentiments, puis deux sentiments.
 
-## Résumé des résultats
+> **Objectif :** suivre l’effet du regroupement des émotions et de l’équilibrage du jeu d’entraînement sur les performances de classification.
 
-Les scores de validation ci-dessous ont été relevés dans les sorties de l’exécution source du notebook. Les sorties en cache ont été retirées du notebook de revue pour éviter des résultats périmés. Les métriques de F1 sont **pondérées**. Les expériences ne partagent pas toutes la même cible; les scores décrivent donc des tâches de difficulté différente.
+[Ouvrir le notebook](notebooks/goemotions_progression.ipynb) · [Voir la présentation PowerPoint](presentation/Go_Emotions.pptx) · [Voir la présentation PDF](presentation/Go_Emotions.pdf)
+
+## Résultats en bref
 
 | Expérience | Meilleur modèle sur dev | Accuracy dev | F1 pondéré dev |
 |---|---|---:|---:|
-| 28 labels (27 émotions + neutral) | Random Forest | 0,508 | 0,447 |
-| 3 sentiments, train non équilibré | Logistic Regression | 0,690 | 0,693 |
-| 3 sentiments, undersampling du train | Random Forest | 0,674 | 0,679 |
-| Positive / negative, undersampling du train | Linear SVM | 0,829 | 0,831 |
+| 28 classes (27 émotions + neutral) | Random Forest | 0,508 | 0,447 |
+| 3 sentiments, sans undersampling | Logistic Regression | 0,690 | 0,693 |
+| 3 sentiments, avec undersampling | Random Forest | 0,674 | 0,679 |
+| Binaire positive / negative | Linear SVM | **0,829** | **0,831** |
 
-Le modèle binaire Linear SVM atteint **0,823 d’accuracy** et **0,825 de F1 pondéré** sur le jeu de test. Sa matrice de confusion (ordre des classes : négatif, positif) est : `[[998, 196], [379, 1675]]`.
+Le pipeline binaire Linear SVM, choisi sur `dev`, obtient **0,823 d’accuracy** et **0,825 de F1 pondéré** sur le jeu de test. Les scores entre expériences ne sont pas directement comparables, car leurs cibles n’ont pas le même nombre de classes.
 
-## Organisation
+## Visualisations
 
-```text
-.
-├── data/
-│   ├── train.tsv
-│   ├── dev.tsv
-│   ├── test.tsv
-│   ├── emotions.txt
-│   ├── sentiment_mapping.json
-│   └── README.md
-├── docs/
-│   └── SOURCES.md
-├── notebooks/
-│   └── goemotions_progression.ipynb
-├── presentation/
-│   └── Go_Emotions.pptx
-├── requirements.txt
-└── README.md
-```
+### Déséquilibre des émotions
 
-## Exécution
+`neutral` est nettement plus fréquent que les autres émotions dans le jeu d’entraînement. Cette distribution motive l’étude de stratégies de regroupement et d’équilibrage.
 
-1. Installer Python 3.10 ou plus récent.
-2. Depuis la racine du dépôt, installer les dépendances :
+![Top 15 des émotions les plus fréquentes dans les données](assets/distribution-emotions.png)
 
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
+### Comparaison des expériences sur dev
 
-3. Démarrer Jupyter depuis la racine du dépôt (ou depuis `notebooks/`) et ouvrir `notebooks/goemotions_progression.ipynb`.
-4. Exécuter les cellules dans l’ordre. Les chemins des données sont résolus automatiquement depuis `data/`.
+Le regroupement en trois sentiments donne les meilleurs résultats de validation. L’undersampling équilibre le train, mais réduit légèrement les scores globaux sur dev. La tâche binaire obtient les scores les plus élevés, avec deux classes seulement.
 
-Les entraînements peuvent prendre plusieurs minutes selon le matériel, en particulier Random Forest. Les cinq modèles comparés sont Logistic Regression, Multinomial Naive Bayes, Linear SVM, Decision Tree et Random Forest.
+![Meilleur modèle et métriques pondérées sur dev pour chaque expérience](assets/resultats-validation.png)
+
+### Évaluation finale sur test
+
+Pour l’expérience binaire, l’ordre des classes de la matrice est `negative`, puis `positive` (lignes : vraies classes; colonnes : classes prédites). Le modèle prédit correctement 998 exemples négatifs et 1 675 exemples positifs.
+
+![Matrice de confusion du modèle Linear SVM sur le jeu de test](assets/matrice-confusion-test.png)
 
 ## Méthode
 
-- GoEmotions fournit à l’origine des exemples annotés avec une ou plusieurs étiquettes.
-- Pour cette étude, le premier label de chaque exemple est conservé afin de transformer la cible en classification mono-label. Les exemples multi-label ne sont pas filtrés.
-- La première expérience distingue les 27 émotions et la classe `neutral`, soit 28 classes.
-- Le fichier `data/sentiment_mapping.json` regroupe les labels en `positive`, `negative` et `neutral`. Dans ce projet, `neutral` comprend le label `neutral` et les émotions ambiguës `realization`, `surprise`, `curiosity` et `confusion`.
-- L’undersampling est appliqué uniquement aux données d’entraînement. Les ensembles dev et test gardent leur distribution d’origine.
-- TF‑IDF est ajusté sur le train, puis appliqué à dev et test. Le meilleur modèle est choisi sur dev; le test est réservé à l’évaluation finale.
+- Les données GoEmotions sont initialement annotées en multi-label. Pour les expériences mono-label, le notebook conserve le premier label de chaque exemple.
+- L’expérience fine conserve les 27 émotions et `neutral`, soit 28 classes.
+- `data/sentiment_mapping.json` regroupe les labels en `positive`, `negative` et `neutral`. Ici, `neutral` comprend aussi `realization`, `surprise`, `curiosity` et `confusion`.
+- L’undersampling s’applique uniquement aux données d’entraînement. Les distributions de `dev` et `test` restent inchangées.
+- TF‑IDF est ajusté sur le train. Le modèle est sélectionné sur dev; le test sert à l’évaluation finale.
+- Les modèles comparés sont Logistic Regression, Multinomial Naive Bayes, Linear SVM, Decision Tree et Random Forest.
 
-## Données et attribution
+## Données et provenance
 
-Les fichiers TSV sont les splits officiels de GoEmotions. Le jeu contient 43 410 exemples d’entraînement, 5 426 exemples de validation et 5 427 exemples de test. Consultez [data/README.md](data/README.md) et [docs/SOURCES.md](docs/SOURCES.md) pour les informations de provenance, de licence et de citation.
+Le dossier `data/` contient les splits GoEmotions, la liste des labels et le mapping des sentiments spécifique à ce projet. Les fichiers TSV n’ont pas d’en-tête. Les détails de provenance, d’attribution et de licence se trouvent dans [data/README.md](data/README.md) et [docs/SOURCES.md](docs/SOURCES.md).
+
+## Installation et exécution
+
+Prérequis : Python 3.10 ou plus récent.
+
+```bash
+python -m pip install -r requirements.txt
+jupyter notebook
+```
+
+Depuis la racine du dépôt, ouvrir `notebooks/goemotions_progression.ipynb` et exécuter les cellules dans l’ordre. Le notebook résout les chemins des fichiers depuis le dépôt; il est donc recommandé de le lancer depuis la racine ou le dossier `notebooks/`. Les entraînements Random Forest peuvent prendre plusieurs minutes selon le matériel.
+
+## Structure du dépôt
+
+```text
+.
+├── assets/                 # Graphiques de la présentation intégrés à cette README
+├── data/                   # Splits GoEmotions et mapping des labels
+├── docs/                   # Sources, attribution et licence
+├── notebooks/              # Notebook d’analyse et de modélisation
+├── presentation/           # Présentations PDF et PowerPoint
+├── README.md
+└── requirements.txt
+```
 
 ## Limites
 
-Les commentaires sont en anglais et proviennent de Reddit. La règle du premier label perd l’information secondaire des exemples multi-label. Le regroupement en sentiments est une décision de projet, notamment pour les quatre émotions ambiguës. Les résultats ne doivent pas être interprétés comme une mesure de performance sur d’autres domaines ou langues.
+Les commentaires sont en anglais et proviennent de Reddit. Le choix du premier label perd l’information secondaire des exemples multi-label. Le regroupement de quatre émotions dans `neutral` est une décision propre à ce projet. Les résultats dépendent de la cible retenue et ne mesurent pas les performances sur d’autres domaines ou langues.
