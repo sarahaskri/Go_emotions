@@ -67,21 +67,19 @@ La provenance, l’attribution, la licence et la structure des fichiers sont dé
 Le pipeline suit les mêmes étapes pour chaque expérience, en adaptant la cible aux trois niveaux de classification.
 
 ```mermaid
-flowchart LR
-    A[Splits TSV<br/>train / dev / test] --> B[Nettoyage du texte]
-    B --> C[Labels GoEmotions]
-    C --> D[28 classes]
-    C --> E[Mapping en 3 sentiments]
-    E --> F[3 sentiments<br/>sans undersampling]
-    E --> G[Undersampling du train]
-    G --> H[3 sentiments équilibrés]
-    G --> I[Retrait de neutral<br/>classification binaire]
-    D --> J[TF-IDF et comparaison<br/>de 5 modèles sur dev]
-    F --> J
-    H --> J
-    I --> J
-    J --> K[Sélection du meilleur modèle]
-    K --> L[Évaluation finale sur test]
+flowchart TB
+    A[Splits GoEmotions<br/>train · dev · test] --> B[Nettoyage du texte]
+    B --> C[Choix de la cible]
+    C --> D[28 classes<br/>27 émotions + neutral]
+    C --> E[3 sentiments<br/>sans undersampling]
+    C --> F[3 sentiments<br/>avec undersampling]
+    C --> G[2 classes<br/>positive / negative]
+    D --> H[TF-IDF et 5 modèles<br/>comparés sur dev]
+    E --> H
+    F --> H
+    G --> H
+    H --> I[Sélection du meilleur modèle<br/>sur dev pour chaque expérience]
+    I --> J[Test final<br/>Linear SVM binaire]
 ```
 
 | Étape | Traitement | Rôle |
