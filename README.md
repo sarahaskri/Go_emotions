@@ -183,11 +183,12 @@ python -m pip install -r requirements.txt
 jupyter notebook
 ```
 
-<div align="center">
-<sub>Si ce projet vous est utile, n'hésitez pas à lui laisser une ⭐</sub>
-</div>
 Ouvrir ensuite `notebooks/goemotions_progression.ipynb` et exécuter les cellules dans l’ordre. Le notebook retrouve les fichiers depuis le dossier `data/`. Les entraînements Random Forest peuvent prendre plusieurs minutes selon le matériel.
 
 ## 👩‍💻 Auteur
 
 **Sarra Askri** — Mini-projet de Machine Learning, année universitaire 2025/2026.
+
+<div align="center">
+<sub>Si ce projet vous est utile, n'hésitez pas à lui laisser une ⭐</sub>
+</div>
